@@ -328,12 +328,12 @@ body {
     <!-- 社長杯 card -->
     <div class="goal-card" style="margin:0 16px 12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 12px;border-bottom:1px solid #f2f2f7;">
-        <span style="font-size:17px;font-weight:800;">🏆 社長杯</span>
+        <span style="font-size:17px;font-weight:800;">🏆 目標値</span>
         <button class="header-btn" onclick="openGoalEdit()">目標編集</button>
       </div>
       <div class="goal-row">
         <div class="goal-row-header">
-          <span class="goal-row-title">AC（年間報酬）</span>
+          <span class="goal-row-title">NAFYC</span>
           <span class="goal-row-remain" id="g-ac-remain-label">残 800 万円</span>
         </div>
         <div class="progress-bar"><div class="progress-fill fill-blue" id="g-ac-bar" style="width:0%"></div></div>
@@ -673,7 +673,7 @@ function renderGoal() {
   document.getElementById('s-mikomi-ac').textContent = mikomiAC + '万';
   document.getElementById('s-total-ac').textContent = acDone + '万';
   document.getElementById('s-mikomi-hi').textContent = mikomiHi + '名';
-  document.getElementById('s-seiaku').textContent = hiDone;
+  document.getElementById('s-seiaku').textContent = hiDone + '名';
 
   // deadlines
   const today = new Date(); today.setHours(0,0,0,0);
