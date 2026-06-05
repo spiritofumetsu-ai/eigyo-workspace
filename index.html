@@ -357,20 +357,20 @@ body {
       </div>
       <div class="stat-item">
         <div class="stat-val" id="s-total-ac">0万</div>
-        <div class="stat-label">達成+見込み計</div>
+        <div class="stat-label">達成AC</div>
       </div>
       <div class="stat-item">
         <div class="stat-val" id="s-mikomi-hi">0名</div>
-        <div class="stat-label">見込み被保数</div>
+        <div class="stat-label">見込み</div>
       </div>
       <div class="stat-item">
         <div class="stat-val" id="s-seiaku">0</div>
-        <div class="stat-label">成約件数</div>
+        <div class="stat-label">被保数</div>
       </div>
     </div>
 
-    <!-- deadline badges -->
-    <div class="deadline-row" id="deadline-badges"></div>
+    <!-- deadline cards -->
+    <div id="deadline-badges" style="padding: 0 16px 16px; display:flex; flex-direction:column; gap:8px;"></div>
 
     <!-- 教弘年責 -->
     <div class="goal-section" style="margin-top:4px;">
@@ -671,18 +671,38 @@ function renderGoal() {
   document.getElementById('g-hi-sub').textContent = `達成 ${hiDone}名 ／ 目標 ${hiT}名（${Math.round(hiPct)}%）　平準払目標 ${goalTargets.hei}名`;
 
   document.getElementById('s-mikomi-ac').textContent = mikomiAC + '万';
-  document.getElementById('s-total-ac').textContent = (acDone + mikomiAC) + '万';
+  document.getElementById('s-total-ac').textContent = acDone + '万';
   document.getElementById('s-mikomi-hi').textContent = mikomiHi + '名';
-  document.getElementById('s-seiaku').textContent = contracted.length;
+  document.getElementById('s-seiaku').textContent = hiDone;
 
   // deadlines
   const today = new Date(); today.setHours(0,0,0,0);
+  const acRemain = Math.max(0, acT - acDone);
+  const hiRemain = Math.max(0, hiT - hiDone);
   const badges = document.getElementById('deadline-badges');
   const dls = getDeadlines(today);
   badges.innerHTML = dls.map(d => {
     const diff = Math.round((d.date - today) / 86400000);
     const urgent = diff <= 14;
-    return `<div class="dl-badge ${urgent?'urgent':''}">${d.label}まで ${diff}日</div>`;
+    const past = diff < 0;
+    if (past) {
+      return `<div style="background:#f2f2f7;border-radius:12px;padding:12px 16px;border:1px solid #e5e5ea;opacity:0.6;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:15px;font-weight:700;color:#8e8e93;">📅 ${d.label}</span>
+          <span style="font-size:13px;font-weight:600;color:#8e8e93;">終了</span>
+        </div>
+      </div>`;
+    }
+    return `<div style="background:${urgent?'#fee2e2':'white'};border-radius:12px;padding:12px 16px;border:1px solid ${urgent?'#fca5a5':'#e5e5ea'};">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:15px;font-weight:700;color:${urgent?'#dc2626':'#1c1c1e'};">📅 ${d.label}</span>
+        <span style="font-size:13px;font-weight:700;color:${urgent?'#dc2626':'#2563eb'};background:${urgent?'#fee2e2':'#dbeafe'};padding:3px 10px;border-radius:99px;">残 ${diff} 日</span>
+      </div>
+      <div style="display:flex;gap:16px;font-size:13px;color:#6b7280;">
+        <span>AC残り <strong style="color:${urgent?'#dc2626':'#1d4ed8'};">${acRemain}万円</strong></span>
+        <span>被保数残り <strong style="color:${urgent?'#dc2626':'#1d4ed8'};">${hiRemain}名</strong></span>
+      </div>
+    </div>`;
   }).join('');
 
   // kyokou
@@ -700,17 +720,15 @@ function renderGoal() {
 }
 
 function getDeadlines(today) {
-  const results = [];
-  // 毎月15日（直近3回分）
-  for (let i = 0; i < 3; i++) {
-    let d = new Date(today.getFullYear(), today.getMonth() + i, 15);
-    if (d < today) continue;
-    // ラベル
-    const m = d.getMonth() + 1;
-    results.push({ label: m + '月15日', date: d });
-    if (results.length >= 3) break;
-  }
-  return results;
+  const year = today.getFullYear();
+  const fixed = [
+    { label: '3月15日',  date: new Date(year, 2, 15) },
+    { label: '6月15日',  date: new Date(year, 5, 15) },
+    { label: '9月15日',  date: new Date(year, 8, 15) },
+    { label: '12月15日', date: new Date(year, 11, 15) },
+  ];
+  // 過去の日付は翌年に繰り越さず、残り日数がマイナスでも全部表示
+  return fixed;
 }
 
 function openGoalEdit() {
