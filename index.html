@@ -329,8 +329,46 @@ body {
 .mbtn-save { background: #2563eb; color: white; }
 
 /* material detail modal */
-.mat-detail { }
 .mat-detail-content { font-size: 15px; color: #3c3c43; line-height: 1.7; white-space: pre-wrap; margin-top: 8px; }
+
+/* ===== MATERIAL TYPE ===== */
+.mat-type-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 7px; border-radius: 6px;
+  font-size: 10px; font-weight: 600; flex-shrink: 0; white-space: nowrap;
+}
+.mtype-text  { background: #f3f4f6; color: #374151; }
+.mtype-word  { background: #dbeafe; color: #1d4ed8; }
+.mtype-html  { background: #f3e8ff; color: #7c3aed; }
+.mtype-link  { background: #d1fae5; color: #065f46; }
+.mtype-other { background: #f3f4f6; color: #6b7280; }
+
+.type-selector { display: flex; gap: 6px; flex-wrap: wrap; }
+.type-btn {
+  flex: 1; min-width: 58px; padding: 8px 4px; border-radius: 10px;
+  border: 1.5px solid #e5e5ea; background: white; cursor: pointer;
+  font-size: 11px; font-weight: 600; text-align: center; color: #6b7280; line-height: 1.3;
+}
+.type-btn.active { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
+
+.mat-detail-placeholder {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 28px 16px; background: #f9fafb; border-radius: 12px;
+  margin-top: 12px; text-align: center; gap: 6px;
+}
+.mat-detail-placeholder .ph-icon { font-size: 40px; }
+.mat-detail-placeholder .ph-title { font-size: 14px; font-weight: 700; color: #374151; }
+.mat-detail-placeholder .ph-sub { font-size: 12px; color: #9ca3af; }
+.mat-detail-placeholder .ph-badge {
+  display: inline-block; padding: 3px 12px; border-radius: 99px;
+  font-size: 11px; font-weight: 700; background: #fef3c7; color: #92400e; margin-top: 4px;
+}
+.mat-link-btn {
+  display: block; width: 100%; padding: 14px 16px; margin-top: 12px;
+  background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 12px;
+  color: #1d4ed8; font-size: 14px; font-weight: 600; text-align: center;
+  text-decoration: none; word-break: break-all; line-height: 1.5;
+}
 
 /* goal edit modal num row */
 .num-row { display: flex; align-items: center; gap: 0; border: 1.5px solid #e5e5ea; border-radius: 12px; overflow: hidden; }
@@ -565,8 +603,33 @@ body {
       <input id="mm-cat" list="cat-dl" placeholder="例：若年層">
       <datalist id="cat-dl"></datalist>
     </div>
-    <div class="form-group"><label>タイトル</label><input id="mm-name" placeholder="トークタイトル"></div>
-    <div class="form-group"><label>内容</label><textarea id="mm-content" placeholder="トーク内容・ポイント" style="min-height:100px;"></textarea></div>
+    <div class="form-group"><label>タイトル</label><input id="mm-name" placeholder="資料のタイトル"></div>
+    <div class="form-group">
+      <label>種別</label>
+      <div class="type-selector">
+        <button class="type-btn active" data-type="text"  onclick="setMatType('text')">📝<br>テキスト</button>
+        <button class="type-btn"        data-type="word"  onclick="setMatType('word')">📄<br>Word</button>
+        <button class="type-btn"        data-type="html"  onclick="setMatType('html')">🎨<br>図解HTML</button>
+        <button class="type-btn"        data-type="link"  onclick="setMatType('link')">🔗<br>リンク</button>
+        <button class="type-btn"        data-type="other" onclick="setMatType('other')">📁<br>その他</button>
+      </div>
+    </div>
+    <div id="mm-area-text" class="form-group">
+      <label>内容</label>
+      <textarea id="mm-content" placeholder="トーク内容・ポイント" style="min-height:100px;"></textarea>
+    </div>
+    <div id="mm-area-link" class="form-group" style="display:none;">
+      <label>URL</label>
+      <input id="mm-url" type="url" placeholder="https://...">
+    </div>
+    <div id="mm-area-file" style="display:none;">
+      <div class="mat-detail-placeholder">
+        <div class="ph-icon" id="mm-file-icon">📄</div>
+        <div class="ph-title" id="mm-file-title">Wordファイル</div>
+        <div class="ph-sub">ファイル添付機能は今後実装予定です</div>
+        <span class="ph-badge">準備中</span>
+      </div>
+    </div>
     <div class="modal-btns">
       <button class="mbtn mbtn-cancel" onclick="closeModal('modal-material')">キャンセル</button>
       <button class="mbtn mbtn-save" onclick="saveMaterial()">保存</button>
@@ -578,8 +641,11 @@ body {
 <div class="modal-bg" id="modal-mat-detail">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2 id="mmd-title"></h2>
-    <div class="mat-detail-content" id="mmd-content"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+      <h2 id="mmd-title" style="margin-bottom:0;flex:1;font-size:17px;font-weight:700;"></h2>
+      <span id="mmd-type-badge" class="mat-type-badge"></span>
+    </div>
+    <div id="mmd-body"></div>
     <div class="modal-btns" style="margin-top:24px;">
       <button class="mbtn mbtn-cancel" onclick="closeModal('modal-mat-detail')">閉じる</button>
       <button class="mbtn mbtn-save" id="mmd-edit-btn" onclick="editMatFromDetail()">編集</button>
@@ -1037,6 +1103,23 @@ function deleteTask(id) {
 }
 
 // ===== MATERIALS =====
+let currentMatType = 'text';
+function matTypeIcon(t)  { return {text:'📝',word:'📄',html:'🎨',link:'🔗',other:'📁'}[t||'text']||'📝'; }
+function matTypeLabel(t) { return {text:'テキスト',word:'Word',html:'図解HTML',link:'リンク',other:'その他'}[t||'text']||'テキスト'; }
+function matTypeCls(t)   { return {text:'mtype-text',word:'mtype-word',html:'mtype-html',link:'mtype-link',other:'mtype-other'}[t||'text']||'mtype-text'; }
+
+function setMatType(type) {
+  currentMatType = type;
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
+  document.getElementById('mm-area-text').style.display = type === 'text' ? '' : 'none';
+  document.getElementById('mm-area-link').style.display = type === 'link' ? '' : 'none';
+  const isFile = type === 'word' || type === 'html' || type === 'other';
+  document.getElementById('mm-area-file').style.display = isFile ? '' : 'none';
+  if (type === 'word')  { document.getElementById('mm-file-icon').textContent='📄'; document.getElementById('mm-file-title').textContent='Wordファイル'; }
+  if (type === 'html')  { document.getElementById('mm-file-icon').textContent='🎨'; document.getElementById('mm-file-title').textContent='図解HTML'; }
+  if (type === 'other') { document.getElementById('mm-file-icon').textContent='📁'; document.getElementById('mm-file-title').textContent='その他のファイル'; }
+}
+
 function renderMaterials() {
   const cats = [...new Set(materials.map(m => m.cat))];
   // update datalist
@@ -1063,7 +1146,10 @@ function renderMaterials() {
       </div>
       ${collapsed ? '' : `<div class="mat-items">
         ${items.map(m => `<div class="mat-item" onclick="openMatDetail('${m.id}')">
-          <span class="mat-item-title">${esc(m.name)}</span>
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+            <span class="mat-type-badge ${matTypeCls(m.type)}">${matTypeIcon(m.type)} ${matTypeLabel(m.type)}</span>
+            <span class="mat-item-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.name)}</span>
+          </div>
           <span class="mat-chevron-r">›</span>
         </div>`).join('')}
         <div class="mat-add-link" onclick="openMaterialModal('${esc(cat)}')">＋ 項目を追加</div>
@@ -1083,6 +1169,8 @@ function openMaterialModal(cat) {
   document.getElementById('mm-cat').value = cat || '';
   document.getElementById('mm-name').value = '';
   document.getElementById('mm-content').value = '';
+  document.getElementById('mm-url').value = '';
+  setMatType('text');
   openModal('modal-material');
 }
 function editMaterial(id) {
@@ -1092,7 +1180,9 @@ function editMaterial(id) {
   document.getElementById('modal-mat-title').textContent = '資料を編集';
   document.getElementById('mm-cat').value = m.cat;
   document.getElementById('mm-name').value = m.name;
-  document.getElementById('mm-content').value = m.content;
+  document.getElementById('mm-content').value = m.content || '';
+  document.getElementById('mm-url').value = m.url || '';
+  setMatType(m.type || 'text');
   closeModal('modal-mat-detail');
   openModal('modal-material');
 }
@@ -1100,7 +1190,12 @@ function saveMaterial() {
   const cat = document.getElementById('mm-cat').value.trim();
   const name = document.getElementById('mm-name').value.trim();
   if (!cat || !name) { alert('カテゴリとタイトルを入力してください'); return; }
-  const data = { id: editingMaterial || uid(), cat, name, content: document.getElementById('mm-content').value.trim() };
+  const data = {
+    id: editingMaterial || uid(), cat, name,
+    type: currentMatType,
+    content: currentMatType === 'text' ? document.getElementById('mm-content').value.trim() : '',
+    url: currentMatType === 'link' ? document.getElementById('mm-url').value.trim() : ''
+  };
   if (editingMaterial) {
     const i = materials.findIndex(m => m.id === editingMaterial);
     materials[i] = data;
@@ -1111,8 +1206,29 @@ function openMatDetail(id) {
   const m = materials.find(x => x.id === id);
   if (!m) return;
   detailMaterialId = id;
+  const type = m.type || 'text';
   document.getElementById('mmd-title').textContent = m.name;
-  document.getElementById('mmd-content').textContent = m.content || '（内容なし）';
+  const badge = document.getElementById('mmd-type-badge');
+  badge.className = `mat-type-badge ${matTypeCls(type)}`;
+  badge.textContent = `${matTypeIcon(type)} ${matTypeLabel(type)}`;
+  const body = document.getElementById('mmd-body');
+  if (type === 'text') {
+    body.innerHTML = `<div class="mat-detail-content">${esc(m.content || '（内容なし）')}</div>`;
+  } else if (type === 'link') {
+    const url = m.url || '';
+    body.innerHTML = url
+      ? `<a href="${url}" target="_blank" rel="noopener" class="mat-link-btn">🔗 リンクを開く<br><span style="font-size:11px;font-weight:400;color:#6b7280;">${esc(url)}</span></a>`
+      : `<div class="mat-detail-content" style="color:#9ca3af;">URLが未設定です</div>`;
+  } else {
+    const icons  = {word:'📄', html:'🎨', other:'📁'};
+    const titles = {word:'Wordファイル', html:'図解HTML', other:'その他のファイル'};
+    body.innerHTML = `<div class="mat-detail-placeholder">
+      <div class="ph-icon">${icons[type]||'📁'}</div>
+      <div class="ph-title">${titles[type]||'ファイル'}</div>
+      <div class="ph-sub">ファイルの格納・表示機能は今後実装予定です</div>
+      <span class="ph-badge">準備中</span>
+    </div>`;
+  }
   openModal('modal-mat-detail');
 }
 function editMatFromDetail() {
