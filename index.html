@@ -174,8 +174,7 @@ body {
 }
 .s-見込み { background: #e0f2fe; color: #0369a1; }
 .s-商談中 { background: #fef3c7; color: #92400e; }
-.s-お預かり { background: #ede9fe; color: #5b21b6; }
-.s-成約 { background: #d1fae5; color: #065f46; }
+.s-お預かり { background: #d1fae5; color: #065f46; }
 .s-お断り { background: #fee2e2; color: #991b1b; }
 .pc-meta { display: flex; gap: 14px; font-size: 13px; color: #8e8e93; flex-wrap: wrap; }
 .pc-action { font-size: 13px; color: #2563eb; margin-top: 6px; }
@@ -413,7 +412,6 @@ body {
       <span class="filter-chip" onclick="filterP('見込み',this)">見込み</span>
       <span class="filter-chip" onclick="filterP('商談中',this)">商談中</span>
       <span class="filter-chip" onclick="filterP('お預かり',this)">お預かり</span>
-      <span class="filter-chip" onclick="filterP('成約',this)">成約</span>
       <span class="filter-chip" onclick="filterP('お断り',this)">お断り</span>
     </div>
     <div class="prospect-list" id="prospect-list"></div>
@@ -468,7 +466,7 @@ body {
     <div class="form-group"><label>うち平準払の被保数</label><input id="pm-hei" type="number" min="0" step="0.5" placeholder="0"></div>
     <div class="form-group"><label>ステータス</label>
       <select id="pm-status">
-        <option>見込み</option><option>商談中</option><option>お預かり</option><option>成約</option><option>お断り</option>
+        <option>見込み</option><option>商談中</option><option>お預かり</option><option>お断り</option>
       </select>
     </div>
     <div class="form-group"><label>次のアクション</label><input id="pm-action" placeholder="例：6/10 面談"></div>
@@ -652,8 +650,8 @@ function fabAction() {
 
 // ===== GOAL =====
 function renderGoal() {
-  const contracted = prospects.filter(p => p.status === '成約');
-  const mikomi = prospects.filter(p => ['見込み','商談中','お預かり'].includes(p.status));
+  const contracted = prospects.filter(p => p.status === 'お預かり');
+  const mikomi = prospects.filter(p => ['見込み','商談中'].includes(p.status));
   const acDone = contracted.reduce((s,p) => s+(parseFloat(p.ac)||0), 0);
   const hiDone = contracted.reduce((s,p) => s+(parseFloat(p.hi)||0), 0);
   const mikomiAC = mikomi.reduce((s,p) => s+(parseFloat(p.ac)||0), 0);
