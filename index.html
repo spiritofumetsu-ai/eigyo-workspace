@@ -189,27 +189,27 @@ body {
 }
 .filter-chip.active { background: #2563eb; color: white; border-color: #2563eb; }
 
-.prospect-list { padding: 12px 16px; }
+.prospect-list { padding: 6px 12px; }
 .prospect-card {
-  background: white; border-radius: 14px; padding: 15px 16px;
-  margin-bottom: 10px;
+  background: white; border-radius: 10px; padding: 7px 10px;
+  margin-bottom: 4px;
 }
 .pc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-.pc-name { font-size: 16px; font-weight: 700; }
+.pc-name { font-size: 14px; font-weight: 700; }
 .status-pill {
-  padding: 3px 10px; border-radius: 99px;
-  font-size: 11px; font-weight: 700; flex-shrink: 0;
+  padding: 2px 7px; border-radius: 99px;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
 }
 .s-見込み { background: #e0f2fe; color: #0369a1; }
 .s-商談中 { background: #fef3c7; color: #92400e; }
 .s-お預かり { background: #d1fae5; color: #065f46; }
 .s-お断り { background: #fee2e2; color: #991b1b; }
-.pc-meta { display: flex; gap: 14px; font-size: 13px; color: #8e8e93; flex-wrap: wrap; }
-.pc-action { font-size: 13px; color: #2563eb; margin-top: 6px; }
-.pc-memo { font-size: 12px; color: #8e8e93; margin-top: 4px; }
-.pc-btns { display: flex; gap: 8px; margin-top: 10px; }
+.pc-meta { display: flex; gap: 8px; font-size: 11px; color: #8e8e93; flex-wrap: wrap; }
+.pc-action { font-size: 11px; color: #2563eb; margin-top: 2px; }
+.pc-memo { font-size: 10px; color: #8e8e93; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-btns { display: flex; gap: 5px; margin-top: 5px; }
 .pc-btn {
-  padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
   border: none; cursor: pointer;
 }
 .pc-btn-edit { background: #f2f2f7; color: #1c1c1e; }
@@ -883,12 +883,12 @@ function renderProspects() {
     <div class="prospect-card" id="pc-${p.id}" draggable="true"
       ondragstart="onDragStart(event,'${p.id}')"
       ondragend="onDragEnd(event)">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:grab;">
-        <span style="color:#c7c7cc;font-size:18px;">⠿</span>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;cursor:grab;">
+        <span style="color:#c7c7cc;font-size:14px;">⠿</span>
         <div class="pc-name" style="flex:1;">${esc(p.name)}</div>
+        ${p.cat ? `<span style="font-size:10px;color:#6b7280;background:#f3f4f6;padding:1px 6px;border-radius:4px;">${esc(p.cat)}${p.detail ? ' › ' + esc(p.detail) : ''}</span>` : ''}
         <span class="status-pill s-${p.status}">${p.status}</span>
       </div>
-      ${p.cat ? `<div style="margin-bottom:6px;"><span style="font-size:11px;color:#6b7280;background:#f3f4f6;padding:2px 8px;border-radius:4px;">${esc(p.cat)}${p.detail ? ' › ' + esc(p.detail) : ''}</span></div>` : ''}
       <div class="pc-meta">
         <span>💰 AC ${p.ac||0}万円</span>
         <span>👤 被保数 ${p.hi||0}名</span>
