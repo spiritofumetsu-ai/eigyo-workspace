@@ -146,6 +146,34 @@ body {
 }
 .dl-badge.urgent { background: #fee2e2; color: #dc2626; }
 
+/* ===== CATEGORY CHIPS ===== */
+.cat-chip {
+  display: inline-block; padding: 5px 14px; border-radius: 99px;
+  font-size: 13px; font-weight: 600; border: 1.5px solid #e5e5ea;
+  background: white; cursor: pointer; color: #3c3c43;
+}
+.cat-chip.active { background: #1c3a6b; color: white; border-color: #1c3a6b; }
+
+/* 展開チップ */
+.sub-group { margin-bottom: 8px; }
+.sub-group-label {
+  font-size: 10px; font-weight: 700; color: white;
+  padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 5px;
+}
+.sub-group-label.minami { background: #ef4444; }
+.sub-group-label.middle { background: #f59e0b; }
+.sub-group-label.midori { background: #10b981; }
+.sub-group-label.chuo { background: #6366f1; }
+.sub-group-label.tsukui { background: #8b5cf6; }
+.sub-group-label.meister { background: #ec4899; }
+.sub-group-label.base { background: #64748b; }
+.item-chip {
+  display: inline-block; padding: 4px 12px; margin: 3px 3px 0 0;
+  border-radius: 99px; font-size: 12px; font-weight: 500;
+  border: 1.5px solid #e5e5ea; background: white; cursor: pointer; color: #3c3c43;
+}
+.item-chip.active { background: #2563eb; color: white; border-color: #2563eb; }
+
 /* ===== PROSPECTS TAB ===== */
 .filter-scroll {
   overflow-x: auto; white-space: nowrap;
@@ -407,6 +435,21 @@ body {
     <div class="page-header">
       <span class="page-title">👥 見込み客</span>
     </div>
+
+    <!-- 分類フィルター -->
+    <div style="background:white;border-bottom:1px solid #e5e5ea;padding:10px 16px 0;">
+      <div style="font-size:11px;color:#8e8e93;font-weight:600;margin-bottom:6px;">分類</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <span class="cat-chip active" data-cat="" onclick="filterCat('',this)">全て</span>
+        <span class="cat-chip" data-cat="学校" onclick="filterCat('学校',this)">🏫 学校</span>
+        <span class="cat-chip" data-cat="コミュニティ" onclick="filterCat('コミュニティ',this)">🏘️ コミュニティ</span>
+        <span class="cat-chip" data-cat="ベース" onclick="filterCat('ベース',this)">🏠 ベース</span>
+      </div>
+      <!-- 展開エリア -->
+      <div id="cat-expand" style="display:none;padding-bottom:10px;"></div>
+    </div>
+
+    <!-- ステータスフィルター -->
     <div class="filter-scroll" id="status-filter-row">
       <span class="filter-chip active" data-status="全て" onclick="filterP('全て',this)">全て</span>
       <span class="filter-chip drop-zone" data-status="見込み" onclick="filterP('見込み',this)">見込み</span>
@@ -464,7 +507,18 @@ body {
     <div class="modal-handle"></div>
     <h2 id="modal-prospect-title">見込み客を追加</h2>
     <div class="form-group"><label>氏名</label><input id="pm-name" placeholder="山田 太郎"></div>
-    <div class="form-group"><label>AC（万円）</label><input id="pm-ac" type="number" min="0" placeholder="0"></div>
+    <div class="form-group"><label>分類</label>
+      <select id="pm-cat" onchange="updatePmSub()">
+        <option value="">未選択</option>
+        <option value="学校">🏫 学校</option>
+        <option value="コミュニティ">🏘️ コミュニティ</option>
+        <option value="ベース">🏠 ベース</option>
+      </select>
+    </div>
+    <div class="form-group" id="pm-detail-group" style="display:none;"><label>詳細</label>
+      <select id="pm-detail"></select>
+    </div>
+    <div class="form-group"><label>NAFYC（万円）</label><input id="pm-ac" type="number" min="0" placeholder="0"></div>
     <div class="form-group"><label>被保数（0.5単位可）</label><input id="pm-hi" type="number" min="0" step="0.5" placeholder="0"></div>
     <div class="form-group"><label>うち平準払の被保数</label><input id="pm-hei" type="number" min="0" step="0.5" placeholder="0"></div>
     <div class="form-group"><label>ステータス</label>
@@ -595,6 +649,23 @@ function checkPw() {
 }
 document.getElementById('pw-input').addEventListener('keydown', e => { if(e.key==='Enter') checkPw(); });
 
+// ===== 分類データ =====
+const CAT_DATA = {
+  '学校': {
+    '南区系': { label: '南区系', cls: 'minami', items: ['新宿小','上溝南中','上溝中','上溝南小','夢の丘小','相模原支援','麻溝小'] },
+    'ミドル': { label: 'ミドル', cls: 'middle', items: ['向陽小','内出中','二本松小','広田小'] },
+    '深緑':   { label: '深緑',   cls: 'midori', items: ['青和学園','藤野南小','藤野小','藤野中','藤野北小'] },
+  },
+  'コミュニティ': {
+    '中央区':   { label: '中央区',   cls: 'chuo',    items: ['矢部','小山系','共和・上矢部','当麻'] },
+    '津久井系': { label: '津久井系', cls: 'tsukui',  items: [] },
+    'マイスター':{ label: 'マイスター',cls:'meister', items: ['桧垣さん','久我さん'] },
+  },
+  'ベース': {
+    'ベース': { label: 'ベース', cls: 'base', items: ['相模原','山形','大学時代'] },
+  },
+};
+
 // ===== STATE =====
 let prospects = JSON.parse(localStorage.getItem('ws_prospects') || '[]');
 let tasks = JSON.parse(localStorage.getItem('ws_tasks') || '[]');
@@ -610,6 +681,8 @@ let catCollapsed = JSON.parse(localStorage.getItem('ws_cat_collapsed') || '{}');
 
 let currentTab = 'goal';
 let prospectFilter = '全て';
+let catFilter = '';      // '' = 全て, '学校' etc.
+let itemFilter = '';     // 詳細アイテム選択時
 let editingProspect = null;
 let editingMaterial = null;
 let editingCat = null;
@@ -754,10 +827,47 @@ function adjNum(id, d) {
 }
 
 // ===== PROSPECTS =====
+function filterCat(cat, el) {
+  catFilter = cat;
+  itemFilter = '';
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const expand = document.getElementById('cat-expand');
+  if (!cat) { expand.style.display = 'none'; renderProspects(); return; }
+  expand.style.display = 'block';
+  const groups = CAT_DATA[cat] || {};
+  expand.innerHTML = Object.entries(groups).map(([sub, info]) => {
+    const itemsHtml = info.items.length
+      ? info.items.map(item =>
+          `<span class="item-chip" data-item="${esc(item)}" onclick="filterItem('${esc(item)}',this)">${esc(item)}</span>`
+        ).join('')
+      : `<span class="item-chip" data-item="${esc(sub)}" onclick="filterItem('${esc(sub)}',this)">${esc(sub)}</span>`;
+    return `<div class="sub-group">
+      <span class="sub-group-label ${info.cls}">${esc(info.label)}</span><br>
+      ${itemsHtml}
+    </div>`;
+  }).join('');
+  renderProspects();
+}
+
+function filterItem(item, el) {
+  if (itemFilter === item) {
+    itemFilter = '';
+    document.querySelectorAll('.item-chip').forEach(c => c.classList.remove('active'));
+  } else {
+    itemFilter = item;
+    document.querySelectorAll('.item-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+  renderProspects();
+}
+
 function renderProspects() {
   const list = document.getElementById('prospect-list');
   let data = prospects;
   if (prospectFilter !== '全て') data = data.filter(p => p.status === prospectFilter);
+  if (catFilter) data = data.filter(p => p.cat === catFilter);
+  if (itemFilter) data = data.filter(p => p.detail === itemFilter);
 
   if (data.length === 0) {
     list.innerHTML = `<div class="empty-state">
@@ -778,6 +888,7 @@ function renderProspects() {
         <div class="pc-name" style="flex:1;">${esc(p.name)}</div>
         <span class="status-pill s-${p.status}">${p.status}</span>
       </div>
+      ${p.cat ? `<div style="margin-bottom:6px;"><span style="font-size:11px;color:#6b7280;background:#f3f4f6;padding:2px 8px;border-radius:4px;">${esc(p.cat)}${p.detail ? ' › ' + esc(p.detail) : ''}</span></div>` : ''}
       <div class="pc-meta">
         <span>💰 AC ${p.ac||0}万円</span>
         <span>👤 被保数 ${p.hi||0}名</span>
@@ -815,17 +926,45 @@ function openProspectModal(id) {
   document.getElementById('pm-hi').value = p?.hi || '';
   document.getElementById('pm-hei').value = p?.hei || '';
   document.getElementById('pm-status').value = p?.status || '見込み';
+  document.getElementById('pm-cat').value = p?.cat || '';
   document.getElementById('pm-action').value = p?.action || '';
   document.getElementById('pm-memo').value = p?.memo || '';
+  updatePmSub(p?.detail || '');
   openModal('modal-prospect');
 }
 function editProspect(id) { openProspectModal(id); }
+
+function updatePmSub(currentVal) {
+  const cat = document.getElementById('pm-cat').value;
+  const group = document.getElementById('pm-detail-group');
+  const sel = document.getElementById('pm-detail');
+  if (!cat) { group.style.display = 'none'; sel.innerHTML = ''; return; }
+  const groups = CAT_DATA[cat] || {};
+  const allItems = [];
+  Object.entries(groups).forEach(([sub, info]) => {
+    if (info.items.length === 0) {
+      allItems.push({ label: sub, value: sub, sep: info.label, cls: info.cls });
+    } else {
+      info.items.forEach((item, i) => {
+        allItems.push({ label: item, value: item, sep: i === 0 ? info.label : null, cls: info.cls });
+      });
+    }
+  });
+  sel.innerHTML = '<option value="">未選択</option>' + allItems.map(i =>
+    (i.sep ? `<option disabled>── ${i.sep} ──</option>` : '') +
+    `<option value="${esc(i.value)}">${esc(i.label)}</option>`
+  ).join('');
+  if (currentVal) sel.value = currentVal;
+  group.style.display = 'block';
+}
 
 function saveProspect() {
   const name = document.getElementById('pm-name').value.trim();
   if (!name) { alert('氏名を入力してください'); return; }
   const data = {
     id: editingProspect || uid(), name,
+    cat: document.getElementById('pm-cat').value,
+    detail: document.getElementById('pm-detail').value,
     ac: parseFloat(document.getElementById('pm-ac').value) || 0,
     hi: parseFloat(document.getElementById('pm-hi').value) || 0,
     hei: parseFloat(document.getElementById('pm-hei').value) || 0,
