@@ -370,6 +370,13 @@ body {
   text-decoration: none; word-break: break-all; line-height: 1.5;
 }
 
+/* ===== 狭い画面対応 ===== */
+@media (max-width: 360px) {
+  .prospect-card { gap: 3px; padding: 4px 6px; }
+  .pc-sub { max-width: 32px; overflow: hidden; text-overflow: ellipsis; }
+  .pc-action-inline { display: none; }
+}
+
 /* goal edit modal num row */
 .num-row { display: flex; align-items: center; gap: 0; border: 1.5px solid #e5e5ea; border-radius: 12px; overflow: hidden; }
 .num-row button { width: 44px; height: 44px; border: none; background: #f2f2f7; font-size: 22px; cursor: pointer; color: #2563eb; font-weight: 600; }
@@ -383,7 +390,7 @@ body {
   <div class="pw-box">
     <h1>🏢 営業ワークスペース</h1>
     <p>パスワードを入力してください</p>
-    <input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()">
+    <input type="password" id="pw-input" placeholder="••••••••">
     <button onclick="checkPw()">ログイン</button>
     <p class="pw-error" id="pw-error">パスワードが違います</p>
   </div>
@@ -438,11 +445,11 @@ body {
       </div>
       <div class="stat-item">
         <div class="stat-val" id="s-mikomi-hi">0名</div>
-        <div class="stat-label">見込み</div>
+        <div class="stat-label">見込み被保</div>
       </div>
       <div class="stat-item">
         <div class="stat-val" id="s-seiaku">0</div>
-        <div class="stat-label">被保数</div>
+        <div class="stat-label">達成被保</div>
       </div>
     </div>
 
@@ -583,7 +590,7 @@ body {
 <div class="modal-bg" id="modal-task">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2>タスクを追加</h2>
+    <h2 id="modal-task-title">タスクを追加</h2>
     <div class="form-group"><label>内容</label><input id="tm-title" placeholder="電話する、書類送付 など"></div>
     <div class="form-group"><label>期限</label><input id="tm-due" type="date"></div>
     <div class="form-group"><label>メモ</label><textarea id="tm-memo" placeholder="自由記入"></textarea></div>
@@ -686,19 +693,35 @@ body {
 <div class="modal-bg" id="modal-kyokou-edit">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2>教弘年責 実績更新</h2>
-    <div class="form-group"><label>年間口数</label>
+    <h2>教弘年責 編集</h2>
+    <div style="font-size:12px;font-weight:700;color:#8e8e93;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">実績</div>
+    <div class="form-group"><label>年間口数（実績）</label>
       <div class="num-row">
         <button onclick="adjNum('ke-annual',-1)">−</button>
         <input type="number" id="ke-annual" min="0">
         <button onclick="adjNum('ke-annual',1)">＋</button>
       </div>
     </div>
-    <div class="form-group"><label>新規口数</label>
+    <div class="form-group"><label>新規口数（実績）</label>
       <div class="num-row">
         <button onclick="adjNum('ke-new',-1)">−</button>
         <input type="number" id="ke-new" min="0">
         <button onclick="adjNum('ke-new',1)">＋</button>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#8e8e93;margin:16px 0 10px;text-transform:uppercase;letter-spacing:0.5px;">目標</div>
+    <div class="form-group"><label>年間目標口数</label>
+      <div class="num-row">
+        <button onclick="adjNum('ke-annual-target',-10)">−</button>
+        <input type="number" id="ke-annual-target" min="0">
+        <button onclick="adjNum('ke-annual-target',10)">＋</button>
+      </div>
+    </div>
+    <div class="form-group"><label>新規目標口数</label>
+      <div class="num-row">
+        <button onclick="adjNum('ke-new-target',-10)">−</button>
+        <input type="number" id="ke-new-target" min="0">
+        <button onclick="adjNum('ke-new-target',10)">＋</button>
       </div>
     </div>
     <div class="modal-btns">
@@ -709,9 +732,15 @@ body {
 </div>
 
 <script>
-// ===== PASSWORD =====
-function checkPw() {
-  if (document.getElementById('pw-input').value === 'ku') {
+// ===== PASSWORD (SHA-256) =====
+const PW_HASH = '88d178d728e8394f3bddcbf9718730f9c0b5b6ce689d99a5146ba9a9d02b4b1b';
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+async function checkPw() {
+  const hash = await sha256(document.getElementById('pw-input').value);
+  if (hash === PW_HASH) {
     document.getElementById('pw-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     init();
@@ -748,6 +777,7 @@ let materials = JSON.parse(localStorage.getItem('ws_materials') || JSON.stringif
   { id: uid(), cat: 'リタイアメント層', name: '相続', content: '相続における保険の活用。生命保険の非課税枠（500万円×法定相続人数）を活かした資産承継の話。' },
 ]));
 let kyokou = JSON.parse(localStorage.getItem('ws_kyokou') || '{"annual":100,"new":100}');
+let kyokouTargets = JSON.parse(localStorage.getItem('ws_kyokou_targets') || '{"annual":385,"new":250}');
 let goalTargets = JSON.parse(localStorage.getItem('ws_goals') || '{"ac":800,"hi":60,"hei":36}');
 let catCollapsed = JSON.parse(localStorage.getItem('ws_cat_collapsed') || '{}');
 
@@ -766,11 +796,12 @@ function save() {
   localStorage.setItem('ws_tasks', JSON.stringify(tasks));
   localStorage.setItem('ws_materials', JSON.stringify(materials));
   localStorage.setItem('ws_kyokou', JSON.stringify(kyokou));
+  localStorage.setItem('ws_kyokou_targets', JSON.stringify(kyokouTargets));
   localStorage.setItem('ws_goals', JSON.stringify(goalTargets));
   localStorage.setItem('ws_cat_collapsed', JSON.stringify(catCollapsed));
 }
 function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // ===== TAB SWITCH =====
@@ -793,10 +824,16 @@ function fabAction() {
   if (currentTab === 'prospects') openProspectModal();
   else if (currentTab === 'tasks') openTaskModal();
   else if (currentTab === 'materials') openMaterialModal();
-  else if (currentTab === 'goal') openKyokouEdit();
+  else if (currentTab === 'goal') openGoalEdit();
 }
 
 // ===== GOAL =====
+// 数値をきれいに表示（浮動小数点ゴミを除去）
+function fmt(n) {
+  const r = Math.round(n * 10) / 10;
+  return Number.isInteger(r) ? String(r) : r.toFixed(1);
+}
+
 function renderGoal() {
   const contracted = prospects.filter(p => p.status === 'お預かり');
   const mikomi = prospects.filter(p => ['見込み','商談中'].includes(p.status));
@@ -806,33 +843,31 @@ function renderGoal() {
   const mikomiHi = mikomi.reduce((s,p) => s+(parseFloat(p.hi)||0), 0);
 
   const acT = goalTargets.ac, hiT = goalTargets.hi;
-  const acPct = Math.min(100, (acDone/acT)*100);
-  const hiPct = Math.min(100, (hiDone/hiT)*100);
+  const acPct = Math.min(100, acT > 0 ? (acDone/acT)*100 : 0);
+  const hiPct = Math.min(100, hiT > 0 ? (hiDone/hiT)*100 : 0);
 
   document.getElementById('g-ac-bar').style.width = acPct + '%';
   document.getElementById('g-hi-bar').style.width = hiPct + '%';
-  document.getElementById('g-ac-remain-label').textContent = '残 ' + Math.max(0,acT-acDone) + ' 万円';
-  document.getElementById('g-hi-remain-label').textContent = '残 ' + Math.max(0,hiT-hiDone).toFixed(1).replace('.0','') + ' 名';
-  document.getElementById('g-ac-sub').textContent = `達成 ${acDone}万円 ／ 目標 ${acT}万円（${Math.round(acPct)}%）`;
-  document.getElementById('g-hi-sub').textContent = `達成 ${hiDone}名 ／ 目標 ${hiT}名（${Math.round(hiPct)}%）　平準払目標 ${goalTargets.hei}名`;
+  document.getElementById('g-ac-remain-label').textContent = '残 ' + fmt(Math.max(0,acT-acDone)) + ' 万円';
+  document.getElementById('g-hi-remain-label').textContent = '残 ' + fmt(Math.max(0,hiT-hiDone)) + ' 名';
+  document.getElementById('g-ac-sub').textContent = `達成 ${fmt(acDone)}万円 ／ 目標 ${acT}万円（${Math.round(acPct)}%）`;
+  document.getElementById('g-hi-sub').textContent = `達成 ${fmt(hiDone)}名 ／ 目標 ${hiT}名（${Math.round(hiPct)}%）　平準払目標 ${goalTargets.hei}名`;
 
-  document.getElementById('s-mikomi-ac').textContent = mikomiAC + '万';
-  document.getElementById('s-total-ac').textContent = acDone + '万';
-  document.getElementById('s-mikomi-hi').textContent = mikomiHi + '名';
-  document.getElementById('s-seiaku').textContent = hiDone + '名';
+  document.getElementById('s-mikomi-ac').textContent = fmt(mikomiAC) + '万';
+  document.getElementById('s-total-ac').textContent = fmt(acDone) + '万';
+  document.getElementById('s-mikomi-hi').textContent = fmt(mikomiHi) + '名';
+  document.getElementById('s-seiaku').textContent = fmt(hiDone) + '名';
 
   // deadlines
   const today = new Date(); today.setHours(0,0,0,0);
-  const acRemain = Math.max(0, acT - acDone);
-  const hiRemain = Math.max(0, hiT - hiDone);
   const badges = document.getElementById('deadline-badges');
   const dls = getDeadlines(today);
   badges.innerHTML = dls.map(d => {
     const diff = Math.round((d.date - today) / 86400000);
     const urgent = diff <= 14;
     const past = diff < 0;
-    const acMilestoneRemain = Math.max(0, d.acTarget - acDone);
-    const hiMilestoneRemain = Math.max(0, d.hiTarget - hiDone);
+    const acMilestoneRemain = fmt(Math.max(0, d.acTarget - acDone));
+    const hiMilestoneRemain = fmt(Math.max(0, d.hiTarget - hiDone));
     if (past) {
       return `<div class="dl-badge" style="opacity:0.5;background:#e5e5ea;color:#8e8e93;">${d.label} 終了</div>`;
     }
@@ -847,14 +882,15 @@ function renderGoal() {
   }).join('');
 
   // kyokou
-  const aPct = Math.min(100, (kyokou.annual/385)*100);
-  const nPct = Math.min(100, (kyokou.new/250)*100);
+  const kAT = kyokouTargets.annual, kNT = kyokouTargets.new;
+  const aPct = Math.min(100, kAT > 0 ? (kyokou.annual/kAT)*100 : 0);
+  const nPct = Math.min(100, kNT > 0 ? (kyokou.new/kNT)*100 : 0);
   document.getElementById('k-annual-bar').style.width = aPct + '%';
   document.getElementById('k-new-bar').style.width = nPct + '%';
-  document.getElementById('k-annual-remain').textContent = '残 ' + Math.max(0,385-kyokou.annual) + ' 口';
-  document.getElementById('k-new-remain').textContent = '残 ' + Math.max(0,250-kyokou.new) + ' 口';
-  document.getElementById('k-annual-sub').textContent = `達成 ${kyokou.annual}口 ／ 目標 385口（${Math.round(aPct)}%）`;
-  document.getElementById('k-new-sub').textContent = `達成 ${kyokou.new}口 ／ 目標 250口（${Math.round(nPct)}%）`;
+  document.getElementById('k-annual-remain').textContent = '残 ' + Math.max(0,kAT-kyokou.annual) + ' 口';
+  document.getElementById('k-new-remain').textContent = '残 ' + Math.max(0,kNT-kyokou.new) + ' 口';
+  document.getElementById('k-annual-sub').textContent = `達成 ${kyokou.annual}口 ／ 目標 ${kAT}口（${Math.round(aPct)}%）`;
+  document.getElementById('k-new-sub').textContent = `達成 ${kyokou.new}口 ／ 目標 ${kNT}口（${Math.round(nPct)}%）`;
   const dec31 = new Date(today.getFullYear(), 11, 31);
   const kdays = Math.round((dec31 - today) / 86400000);
   document.getElementById('k-days').textContent = kdays;
@@ -876,21 +912,33 @@ function openGoalEdit() {
   document.getElementById('ge-hei').value = goalTargets.hei;
   openModal('modal-goal-edit');
 }
+function parseGoalVal(id, def) {
+  const v = document.getElementById(id).value.trim();
+  if (v === '') return def;
+  const n = parseFloat(v);
+  return isNaN(n) ? def : n;
+}
 function saveGoalEdit() {
-  goalTargets.ac = parseFloat(document.getElementById('ge-ac').value) || 800;
-  goalTargets.hi = parseFloat(document.getElementById('ge-hi').value) || 60;
-  goalTargets.hei = parseFloat(document.getElementById('ge-hei').value) || 36;
+  goalTargets.ac  = parseGoalVal('ge-ac', 800);
+  goalTargets.hi  = parseGoalVal('ge-hi', 60);
+  goalTargets.hei = parseGoalVal('ge-hei', 36);
   save(); closeModal('modal-goal-edit'); renderGoal();
 }
 
 function openKyokouEdit() {
   document.getElementById('ke-annual').value = kyokou.annual;
   document.getElementById('ke-new').value = kyokou.new;
+  document.getElementById('ke-annual-target').value = kyokouTargets.annual;
+  document.getElementById('ke-new-target').value = kyokouTargets.new;
   openModal('modal-kyokou-edit');
 }
 function saveKyokou() {
   kyokou.annual = parseInt(document.getElementById('ke-annual').value) || 0;
   kyokou.new = parseInt(document.getElementById('ke-new').value) || 0;
+  const kAT = parseInt(document.getElementById('ke-annual-target').value);
+  const kNT = parseInt(document.getElementById('ke-new-target').value);
+  kyokouTargets.annual = isNaN(kAT) || kAT < 0 ? 385 : kAT;
+  kyokouTargets.new = isNaN(kNT) || kNT < 0 ? 250 : kNT;
   save(); closeModal('modal-kyokou-edit'); renderGoal();
 }
 function adjNum(id, d) {
@@ -953,8 +1001,7 @@ function renderProspects() {
   const sorted = [...data].reverse();
   list.innerHTML = sorted.map(p => `
     <div class="prospect-card" id="pc-${p.id}" draggable="true"
-      ondragstart="onDragStart(event,'${p.id}')"
-      ondragend="onDragEnd(event)">
+      ondragstart="onDragStart(event,'${p.id}')">
       <span class="pc-drag">⠿</span>
       <div class="pc-name">${esc(p.name)}</div>
       <span class="status-pill s-${p.status}">${p.status}</span>
@@ -967,10 +1014,13 @@ function renderProspects() {
     </div>
   `).join('');
 
-  // タッチ対応ドラッグ
+  // タッチ対応ドラッグ & dragendをJS側で登録（二重呼び出し防止）
   sorted.forEach(p => {
     const el = document.getElementById('pc-' + p.id);
-    if (el) setupTouchDrag(el, p.id);
+    if (el) {
+      setupTouchDrag(el, p.id);
+      el.addEventListener('dragend', onDragEnd);
+    }
   });
 }
 
@@ -1038,7 +1088,7 @@ function saveProspect() {
   };
   if (editingProspect) {
     const i = prospects.findIndex(p => p.id === editingProspect);
-    prospects[i] = data;
+    prospects[i] = { ...prospects[i], ...data }; // createdAt など既存フィールドを保持
   } else { data.createdAt = Date.now(); prospects.push(data); }
   save(); closeModal('modal-prospect'); renderProspects(); renderGoal();
 }
@@ -1075,21 +1125,34 @@ function renderTasks() {
         ${t.due ? `<div class="task-due ${overdue?'overdue':''}">${overdue?'⚠️ ':'📅 '}${t.due}</div>` : ''}
         ${t.memo ? `<div class="task-memo-text">📝 ${esc(t.memo)}</div>` : ''}
       </div>
-      <button class="task-del" onclick="deleteTask('${t.id}')">×</button>
+      <button class="task-del" onclick="editTask('${t.id}')" title="編集" style="font-size:16px;color:#8e8e93;">✏️</button>
+      <button class="task-del" onclick="deleteTask('${t.id}')" title="削除">×</button>
     </div>`;
   }).join('');
 }
 
-function openTaskModal() {
-  document.getElementById('tm-title').value = '';
-  document.getElementById('tm-due').value = '';
-  document.getElementById('tm-memo').value = '';
+let editingTask = null;
+
+function openTaskModal(id) {
+  editingTask = id || null;
+  const t = id ? tasks.find(x => x.id === id) : null;
+  document.getElementById('modal-task-title').textContent = t ? 'タスクを編集' : 'タスクを追加';
+  document.getElementById('tm-title').value = t?.title || '';
+  document.getElementById('tm-due').value = t?.due || '';
+  document.getElementById('tm-memo').value = t?.memo || '';
   openModal('modal-task');
 }
+function editTask(id) { openTaskModal(id); }
 function saveTask() {
   const title = document.getElementById('tm-title').value.trim();
   if (!title) { alert('内容を入力してください'); return; }
-  tasks.push({ id:uid(), title, due:document.getElementById('tm-due').value, memo:document.getElementById('tm-memo').value.trim(), done:false });
+  const data = { title, due: document.getElementById('tm-due').value, memo: document.getElementById('tm-memo').value.trim() };
+  if (editingTask) {
+    const t = tasks.find(x => x.id === editingTask);
+    if (t) Object.assign(t, data);
+  } else {
+    tasks.push({ id: uid(), done: false, createdAt: Date.now(), ...data });
+  }
   save(); closeModal('modal-task'); renderTasks();
 }
 function toggleTask(id, checked) {
@@ -1098,6 +1161,7 @@ function toggleTask(id, checked) {
   save(); renderTasks();
 }
 function deleteTask(id) {
+  if (!confirm('このタスクを削除しますか？')) return;
   tasks = tasks.filter(t => t.id !== id);
   save(); renderTasks();
 }
@@ -1190,11 +1254,19 @@ function saveMaterial() {
   const cat = document.getElementById('mm-cat').value.trim();
   const name = document.getElementById('mm-name').value.trim();
   if (!cat || !name) { alert('カテゴリとタイトルを入力してください'); return; }
+  let url = '';
+  if (currentMatType === 'link') {
+    url = document.getElementById('mm-url').value.trim();
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      alert('URLはhttp://またはhttps://で始まる形式で入力してください');
+      return;
+    }
+  }
   const data = {
     id: editingMaterial || uid(), cat, name,
     type: currentMatType,
     content: currentMatType === 'text' ? document.getElementById('mm-content').value.trim() : '',
-    url: currentMatType === 'link' ? document.getElementById('mm-url').value.trim() : ''
+    url
   };
   if (editingMaterial) {
     const i = materials.findIndex(m => m.id === editingMaterial);
@@ -1215,10 +1287,11 @@ function openMatDetail(id) {
   if (type === 'text') {
     body.innerHTML = `<div class="mat-detail-content">${esc(m.content || '（内容なし）')}</div>`;
   } else if (type === 'link') {
-    const url = m.url || '';
-    body.innerHTML = url
-      ? `<a href="${url}" target="_blank" rel="noopener" class="mat-link-btn">🔗 リンクを開く<br><span style="font-size:11px;font-weight:400;color:#6b7280;">${esc(url)}</span></a>`
-      : `<div class="mat-detail-content" style="color:#9ca3af;">URLが未設定です</div>`;
+    const rawUrl = m.url || '';
+    const safeUrl = (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) ? rawUrl : '';
+    body.innerHTML = safeUrl
+      ? `<a href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer" class="mat-link-btn">🔗 リンクを開く<br><span style="font-size:11px;font-weight:400;color:#6b7280;">${esc(safeUrl)}</span></a>`
+      : `<div class="mat-detail-content" style="color:#9ca3af;">${rawUrl ? '無効なURLです（http/https以外）' : 'URLが未設定です'}</div>`;
   } else {
     const icons  = {word:'📄', html:'🎨', other:'📁'};
     const titles = {word:'Wordファイル', html:'図解HTML', other:'その他のファイル'};
@@ -1351,8 +1424,7 @@ function setupTouchDrag(el, id) {
     });
   }, { passive: false });
 
-  el.addEventListener('touchend', e => {
-    if (!moved || !touchDragActive) return;
+  function cleanupDrag() {
     touchDragActive = false;
     if (ghostEl) { ghostEl.remove(); ghostEl = null; }
     document.getElementById('drop-hint').style.display = 'none';
@@ -1360,19 +1432,24 @@ function setupTouchDrag(el, id) {
       z.style.outline = '';
       z.style.background = '';
     });
+  }
 
+  el.addEventListener('touchend', e => {
+    if (!moved || !touchDragActive) return;
     const tx = e.changedTouches[0].clientX, ty = e.changedTouches[0].clientY;
-    let dropped = false;
+    cleanupDrag();
     document.querySelectorAll('.drop-zone').forEach(z => {
       const r = z.getBoundingClientRect();
       if (tx >= r.left && tx <= r.right && ty >= r.top && ty <= r.bottom) {
         const status = z.dataset.status;
-        if (status && status !== '全て') {
-          changeProspectStatus(id, status);
-          dropped = true;
-        }
+        if (status && status !== '全て') changeProspectStatus(id, status);
       }
     });
+  });
+
+  el.addEventListener('touchcancel', () => {
+    moved = false;
+    cleanupDrag();
   });
 }
 
