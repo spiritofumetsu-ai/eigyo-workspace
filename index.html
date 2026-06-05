@@ -407,12 +407,15 @@ body {
     <div class="page-header">
       <span class="page-title">👥 見込み客</span>
     </div>
-    <div class="filter-scroll">
-      <span class="filter-chip active" onclick="filterP('全て',this)">全て</span>
-      <span class="filter-chip" onclick="filterP('見込み',this)">見込み</span>
-      <span class="filter-chip" onclick="filterP('商談中',this)">商談中</span>
-      <span class="filter-chip" onclick="filterP('お預かり',this)">お預かり</span>
-      <span class="filter-chip" onclick="filterP('お断り',this)">お断り</span>
+    <div class="filter-scroll" id="status-filter-row">
+      <span class="filter-chip active" data-status="全て" onclick="filterP('全て',this)">全て</span>
+      <span class="filter-chip drop-zone" data-status="見込み" onclick="filterP('見込み',this)">見込み</span>
+      <span class="filter-chip drop-zone" data-status="商談中" onclick="filterP('商談中',this)">商談中</span>
+      <span class="filter-chip drop-zone" data-status="お預かり" onclick="filterP('お預かり',this)">お預かり</span>
+      <span class="filter-chip drop-zone" data-status="お断り" onclick="filterP('お断り',this)">お断り</span>
+    </div>
+    <div id="drop-hint" style="display:none;text-align:center;font-size:12px;color:#2563eb;padding:6px 16px;background:#eff6ff;border-bottom:1px solid #bfdbfe;">
+      ↑ 上のステータスにドロップしてください
     </div>
     <div class="prospect-list" id="prospect-list"></div>
   </div>
@@ -764,10 +767,15 @@ function renderProspects() {
     </div>`;
     return;
   }
-  list.innerHTML = data.map(p => `
-    <div class="prospect-card">
-      <div class="pc-top">
-        <div class="pc-name">${esc(p.name)}</div>
+  // 新しい順に表示
+  const sorted = [...data].reverse();
+  list.innerHTML = sorted.map(p => `
+    <div class="prospect-card" id="pc-${p.id}" draggable="true"
+      ondragstart="onDragStart(event,'${p.id}')"
+      ondragend="onDragEnd(event)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:grab;">
+        <span style="color:#c7c7cc;font-size:18px;">⠿</span>
+        <div class="pc-name" style="flex:1;">${esc(p.name)}</div>
         <span class="status-pill s-${p.status}">${p.status}</span>
       </div>
       <div class="pc-meta">
@@ -783,6 +791,12 @@ function renderProspects() {
       </div>
     </div>
   `).join('');
+
+  // タッチ対応ドラッグ
+  sorted.forEach(p => {
+    const el = document.getElementById('pc-' + p.id);
+    if (el) setupTouchDrag(el, p.id);
+  });
 }
 
 function filterP(f, el) {
@@ -822,7 +836,7 @@ function saveProspect() {
   if (editingProspect) {
     const i = prospects.findIndex(p => p.id === editingProspect);
     prospects[i] = data;
-  } else { prospects.push(data); }
+  } else { data.createdAt = Date.now(); prospects.push(data); }
   save(); closeModal('modal-prospect'); renderProspects(); renderGoal();
 }
 
@@ -989,6 +1003,124 @@ function deleteCat() {
   materials = materials.filter(m => m.cat !== editingCat);
   delete catCollapsed[editingCat];
   save(); closeModal('modal-cat-edit'); renderMaterials();
+}
+
+// ===== DRAG & DROP =====
+let dragId = null;
+let ghostEl = null;
+let touchDragActive = false;
+
+function onDragStart(e, id) {
+  dragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  document.getElementById('drop-hint').style.display = 'block';
+  document.querySelectorAll('.drop-zone').forEach(z => {
+    z.style.outline = '2px dashed #2563eb';
+    z.style.outlineOffset = '2px';
+    z.addEventListener('dragover', onDragOver);
+    z.addEventListener('drop', onDrop);
+    z.addEventListener('dragleave', onDragLeave);
+  });
+}
+function onDragEnd(e) {
+  dragId = null;
+  document.getElementById('drop-hint').style.display = 'none';
+  document.querySelectorAll('.drop-zone').forEach(z => {
+    z.style.outline = '';
+    z.style.background = '';
+    z.removeEventListener('dragover', onDragOver);
+    z.removeEventListener('drop', onDrop);
+    z.removeEventListener('dragleave', onDragLeave);
+  });
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.style.background = '#dbeafe';
+}
+function onDragLeave(e) {
+  e.currentTarget.style.background = '';
+}
+function onDrop(e) {
+  e.preventDefault();
+  const status = e.currentTarget.dataset.status;
+  if (dragId && status && status !== '全て') {
+    changeProspectStatus(dragId, status);
+  }
+  onDragEnd(e);
+}
+function changeProspectStatus(id, status) {
+  const p = prospects.find(x => x.id === id);
+  if (!p) return;
+  p.status = status;
+  save(); renderProspects(); renderGoal();
+}
+
+// タッチ対応ドラッグ（iPhone/iPad）
+function setupTouchDrag(el, id) {
+  let startX, startY, moved = false;
+  el.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    moved = false;
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    const dx = Math.abs(e.touches[0].clientX - startX);
+    const dy = Math.abs(e.touches[0].clientY - startY);
+    if (dx < 8 && dy < 8) return;
+    moved = true;
+    touchDragActive = true;
+    e.preventDefault();
+
+    // ゴースト生成
+    if (!ghostEl) {
+      ghostEl = el.cloneNode(true);
+      ghostEl.style.cssText = `position:fixed;z-index:9999;opacity:0.85;width:${el.offsetWidth}px;pointer-events:none;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,0.2);`;
+      document.body.appendChild(ghostEl);
+      document.getElementById('drop-hint').style.display = 'block';
+      document.querySelectorAll('.drop-zone').forEach(z => {
+        z.style.outline = '2px dashed #2563eb';
+        z.style.outlineOffset = '2px';
+      });
+    }
+    ghostEl.style.left = (e.touches[0].clientX - el.offsetWidth/2) + 'px';
+    ghostEl.style.top = (e.touches[0].clientY - 30) + 'px';
+
+    // ホバー中のチップを強調
+    document.querySelectorAll('.drop-zone').forEach(z => {
+      const r = z.getBoundingClientRect();
+      const tx = e.touches[0].clientX, ty = e.touches[0].clientY;
+      if (tx >= r.left && tx <= r.right && ty >= r.top && ty <= r.bottom) {
+        z.style.background = '#dbeafe';
+      } else {
+        z.style.background = '';
+      }
+    });
+  }, { passive: false });
+
+  el.addEventListener('touchend', e => {
+    if (!moved || !touchDragActive) return;
+    touchDragActive = false;
+    if (ghostEl) { ghostEl.remove(); ghostEl = null; }
+    document.getElementById('drop-hint').style.display = 'none';
+    document.querySelectorAll('.drop-zone').forEach(z => {
+      z.style.outline = '';
+      z.style.background = '';
+    });
+
+    const tx = e.changedTouches[0].clientX, ty = e.changedTouches[0].clientY;
+    let dropped = false;
+    document.querySelectorAll('.drop-zone').forEach(z => {
+      const r = z.getBoundingClientRect();
+      if (tx >= r.left && tx <= r.right && ty >= r.top && ty <= r.bottom) {
+        const status = z.dataset.status;
+        if (status && status !== '全て') {
+          changeProspectStatus(id, status);
+          dropped = true;
+        }
+      }
+    });
+  });
 }
 
 // ===== MODAL =====
