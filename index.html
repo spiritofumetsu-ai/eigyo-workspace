@@ -146,13 +146,7 @@ body {
 }
 .dl-badge.urgent { background: #fee2e2; color: #dc2626; }
 
-/* ===== CATEGORY CHIPS ===== */
-.cat-chip {
-  display: inline-block; padding: 5px 14px; border-radius: 99px;
-  font-size: 13px; font-weight: 600; border: 1.5px solid #e5e5ea;
-  background: white; cursor: pointer; color: #3c3c43;
-}
-.cat-chip.active { background: #1c3a6b; color: white; border-color: #1c3a6b; }
+/* ===== CATEGORY CHIPS ===== (定義はPROSPECTS TABセクションに統合) */
 
 /* 展開チップ */
 .sub-group { margin-bottom: 8px; }
@@ -177,41 +171,59 @@ body {
 /* ===== PROSPECTS TAB ===== */
 .filter-scroll {
   overflow-x: auto; white-space: nowrap;
-  padding: 12px 16px;
+  padding: 6px 12px;
   background: white;
   border-bottom: 1px solid #e5e5ea;
 }
 .filter-scroll::-webkit-scrollbar { display: none; }
 .filter-chip {
-  display: inline-block; padding: 6px 16px; margin-right: 8px;
-  border-radius: 99px; font-size: 13px; font-weight: 600;
+  display: inline-block; padding: 4px 11px; margin-right: 5px;
+  border-radius: 99px; font-size: 12px; font-weight: 600;
   border: 1.5px solid #e5e5ea; background: white; cursor: pointer; color: #3c3c43;
 }
 .filter-chip.active { background: #2563eb; color: white; border-color: #2563eb; }
-
-.prospect-list { padding: 6px 12px; }
-.prospect-card {
-  background: white; border-radius: 10px; padding: 7px 10px;
-  margin-bottom: 4px;
+.cat-chip {
+  display: inline-block; padding: 4px 11px; margin-right: 5px;
+  border-radius: 99px; font-size: 12px; font-weight: 600;
+  border: 1.5px solid #e5e5ea; background: white; cursor: pointer; color: #3c3c43;
 }
-.pc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-.pc-name { font-size: 14px; font-weight: 700; }
+.cat-chip.active { background: #1c3a6b; color: white; border-color: #1c3a6b; }
+.filter-divider {
+  display: inline-block; width: 1px; height: 18px; background: #e5e5ea;
+  margin: 0 6px; vertical-align: middle;
+}
+
+.prospect-list { padding: 4px 10px; }
+.prospect-card {
+  background: white; border-radius: 8px;
+  padding: 5px 8px;
+  margin-bottom: 3px;
+  display: flex; align-items: center; gap: 5px;
+  min-height: 32px;
+}
+.pc-drag { color: #c7c7cc; font-size: 12px; flex-shrink: 0; cursor: grab; }
+.pc-name { font-size: 13px; font-weight: 700; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .status-pill {
-  padding: 2px 7px; border-radius: 99px;
-  font-size: 10px; font-weight: 700; flex-shrink: 0;
+  padding: 2px 6px; border-radius: 99px;
+  font-size: 9px; font-weight: 700; flex-shrink: 0; white-space: nowrap;
 }
 .s-見込み { background: #e0f2fe; color: #0369a1; }
 .s-商談中 { background: #fef3c7; color: #92400e; }
 .s-お預かり { background: #d1fae5; color: #065f46; }
 .s-お断り { background: #fee2e2; color: #991b1b; }
-.pc-meta { display: flex; gap: 8px; font-size: 11px; color: #8e8e93; flex-wrap: wrap; }
-.pc-action { font-size: 11px; color: #2563eb; margin-top: 2px; }
-.pc-memo { font-size: 10px; color: #8e8e93; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pc-btns { display: flex; gap: 5px; margin-top: 5px; }
-.pc-btn {
-  padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
-  border: none; cursor: pointer;
+.pc-sub { font-size: 10px; color: #8e8e93; white-space: nowrap; flex-shrink: 0; }
+.pc-action-inline { font-size: 10px; color: #2563eb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+.pc-icon-btn {
+  background: none; border: none; cursor: pointer; padding: 2px 3px;
+  font-size: 14px; flex-shrink: 0; line-height: 1;
 }
+/* legacy - kept for compatibility */
+.pc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.pc-meta { display: flex; gap: 8px; font-size: 11px; color: #8e8e93; }
+.pc-action { font-size: 11px; color: #2563eb; }
+.pc-memo { font-size: 10px; color: #8e8e93; }
+.pc-btns { display: flex; gap: 5px; }
+.pc-btn { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; border: none; cursor: pointer; }
 .pc-btn-edit { background: #f2f2f7; color: #1c1c1e; }
 .pc-btn-del { background: #fee2e2; color: #dc2626; }
 
@@ -436,27 +448,21 @@ body {
       <span class="page-title">👥 見込み客</span>
     </div>
 
-    <!-- 分類フィルター -->
-    <div style="background:white;border-bottom:1px solid #e5e5ea;padding:10px 16px 0;">
-      <div style="font-size:11px;color:#8e8e93;font-weight:600;margin-bottom:6px;">分類</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-        <span class="cat-chip active" data-cat="" onclick="filterCat('',this)">全て</span>
-        <span class="cat-chip" data-cat="学校" onclick="filterCat('学校',this)">🏫 学校</span>
-        <span class="cat-chip" data-cat="コミュニティ" onclick="filterCat('コミュニティ',this)">🏘️ コミュニティ</span>
-        <span class="cat-chip" data-cat="ベース" onclick="filterCat('ベース',this)">🏠 ベース</span>
-      </div>
-      <!-- 展開エリア -->
-      <div id="cat-expand" style="display:none;padding-bottom:10px;"></div>
-    </div>
-
-    <!-- ステータスフィルター -->
+    <!-- 分類・ステータスフィルター（1行） -->
     <div class="filter-scroll" id="status-filter-row">
+      <span class="cat-chip active" data-cat="" onclick="filterCat('',this)">全て</span>
+      <span class="cat-chip" data-cat="学校" onclick="filterCat('学校',this)">🏫 学校</span>
+      <span class="cat-chip" data-cat="コミュニティ" onclick="filterCat('コミュニティ',this)">🏘️ コミュ</span>
+      <span class="cat-chip" data-cat="ベース" onclick="filterCat('ベース',this)">🏠 ベース</span>
+      <span class="filter-divider"></span>
       <span class="filter-chip active" data-status="全て" onclick="filterP('全て',this)">全て</span>
       <span class="filter-chip drop-zone" data-status="見込み" onclick="filterP('見込み',this)">見込み</span>
       <span class="filter-chip drop-zone" data-status="商談中" onclick="filterP('商談中',this)">商談中</span>
       <span class="filter-chip drop-zone" data-status="お預かり" onclick="filterP('お預かり',this)">お預かり</span>
       <span class="filter-chip drop-zone" data-status="お断り" onclick="filterP('お断り',this)">お断り</span>
     </div>
+    <!-- 展開エリア（非表示） -->
+    <div id="cat-expand" style="display:none;"></div>
     <div id="drop-hint" style="display:none;text-align:center;font-size:12px;color:#2563eb;padding:6px 16px;background:#eff6ff;border-bottom:1px solid #bfdbfe;">
       ↑ 上のステータスにドロップしてください
     </div>
@@ -883,23 +889,15 @@ function renderProspects() {
     <div class="prospect-card" id="pc-${p.id}" draggable="true"
       ondragstart="onDragStart(event,'${p.id}')"
       ondragend="onDragEnd(event)">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;cursor:grab;">
-        <span style="color:#c7c7cc;font-size:14px;">⠿</span>
-        <div class="pc-name" style="flex:1;">${esc(p.name)}</div>
-        ${p.cat ? `<span style="font-size:10px;color:#6b7280;background:#f3f4f6;padding:1px 6px;border-radius:4px;">${esc(p.cat)}${p.detail ? ' › ' + esc(p.detail) : ''}</span>` : ''}
-        <span class="status-pill s-${p.status}">${p.status}</span>
-      </div>
-      <div class="pc-meta">
-        <span>💰 AC ${p.ac||0}万円</span>
-        <span>👤 被保数 ${p.hi||0}名</span>
-        ${p.hei ? `<span>📋 平準払 ${p.hei}名</span>` : ''}
-      </div>
-      ${p.action ? `<div class="pc-action">→ ${esc(p.action)}</div>` : ''}
-      ${p.memo ? `<div class="pc-memo">📝 ${esc(p.memo)}</div>` : ''}
-      <div class="pc-btns">
-        <button class="pc-btn pc-btn-edit" onclick="editProspect('${p.id}')">編集</button>
-        <button class="pc-btn pc-btn-del" onclick="deleteProspect('${p.id}')">削除</button>
-      </div>
+      <span class="pc-drag">⠿</span>
+      <div class="pc-name">${esc(p.name)}</div>
+      <span class="status-pill s-${p.status}">${p.status}</span>
+      <span class="pc-sub">AC${p.ac||0}万</span>
+      <span class="pc-sub">被${p.hi||0}名</span>
+      ${p.cat ? `<span class="pc-sub" style="color:#9ca3af;">${esc(p.cat)}${p.detail ? '›'+esc(p.detail) : ''}</span>` : ''}
+      ${p.action ? `<span class="pc-action-inline">→${esc(p.action)}</span>` : ''}
+      <button class="pc-icon-btn" onclick="editProspect('${p.id}')" title="編集">✏️</button>
+      <button class="pc-icon-btn" onclick="deleteProspect('${p.id}')" title="削除">🗑️</button>
     </div>
   `).join('');
 
