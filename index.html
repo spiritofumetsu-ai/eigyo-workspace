@@ -722,10 +722,10 @@ function renderGoal() {
 function getDeadlines(today) {
   const year = today.getFullYear();
   const fixed = [
-    { label: '3月15日',  date: new Date(year, 2, 15) },
     { label: '6月15日',  date: new Date(year, 5, 15) },
     { label: '9月15日',  date: new Date(year, 8, 15) },
     { label: '12月15日', date: new Date(year, 11, 15) },
+    { label: '3月15日',  date: new Date(year + 1, 2, 15) },
   ];
   // 過去の日付は翌年に繰り越さず、残り日数がマイナスでも全部表示
   return fixed;
