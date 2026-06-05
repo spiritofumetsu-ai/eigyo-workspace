@@ -369,8 +369,8 @@ body {
       </div>
     </div>
 
-    <!-- deadline cards -->
-    <div id="deadline-badges" style="padding: 0 16px 16px; display:flex; flex-direction:column; gap:8px;"></div>
+    <!-- deadline badges -->
+    <div class="deadline-row" id="deadline-badges"></div>
 
     <!-- 教弘年責 -->
     <div class="goal-section" style="margin-top:4px;">
@@ -685,22 +685,17 @@ function renderGoal() {
     const diff = Math.round((d.date - today) / 86400000);
     const urgent = diff <= 14;
     const past = diff < 0;
+    const acMilestoneRemain = Math.max(0, d.acTarget - acDone);
+    const hiMilestoneRemain = Math.max(0, d.hiTarget - hiDone);
     if (past) {
-      return `<div style="background:#f2f2f7;border-radius:12px;padding:12px 16px;border:1px solid #e5e5ea;opacity:0.6;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:15px;font-weight:700;color:#8e8e93;">📅 ${d.label}</span>
-          <span style="font-size:13px;font-weight:600;color:#8e8e93;">終了</span>
-        </div>
-      </div>`;
+      return `<div class="dl-badge" style="opacity:0.5;background:#e5e5ea;color:#8e8e93;">${d.label} 終了</div>`;
     }
-    return `<div style="background:${urgent?'#fee2e2':'white'};border-radius:12px;padding:12px 16px;border:1px solid ${urgent?'#fca5a5':'#e5e5ea'};">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-size:15px;font-weight:700;color:${urgent?'#dc2626':'#1c1c1e'};">📅 ${d.label}</span>
-        <span style="font-size:13px;font-weight:700;color:${urgent?'#dc2626':'#2563eb'};background:${urgent?'#fee2e2':'#dbeafe'};padding:3px 10px;border-radius:99px;">残 ${diff} 日</span>
+    return `<div style="display:inline-flex;flex-direction:column;gap:2px;padding:7px 12px;border-radius:12px;background:${urgent?'#fee2e2':'#dbeafe'};border:1px solid ${urgent?'#fca5a5':'#bfdbfe'};">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;font-weight:700;color:${urgent?'#dc2626':'#1d4ed8'};">${d.label}まで ${diff}日</span>
       </div>
-      <div style="display:flex;gap:16px;font-size:13px;color:#6b7280;">
-        <span>AC残り <strong style="color:${urgent?'#dc2626':'#1d4ed8'};">${acRemain}万円</strong></span>
-        <span>被保数残り <strong style="color:${urgent?'#dc2626':'#1d4ed8'};">${hiRemain}名</strong></span>
+      <div style="font-size:11px;color:${urgent?'#dc2626':'#1d4ed8'};font-weight:600;">
+        AC残 ${acMilestoneRemain}万 ／ 被保数残 ${hiMilestoneRemain}名
       </div>
     </div>`;
   }).join('');
@@ -721,14 +716,12 @@ function renderGoal() {
 
 function getDeadlines(today) {
   const year = today.getFullYear();
-  const fixed = [
-    { label: '6月15日',  date: new Date(year, 5, 15) },
-    { label: '9月15日',  date: new Date(year, 8, 15) },
-    { label: '12月15日', date: new Date(year, 11, 15) },
-    { label: '3月15日',  date: new Date(year + 1, 2, 15) },
+  return [
+    { label: '6月15日',  date: new Date(year, 5, 15),     acTarget: 200, hiTarget: 15 },
+    { label: '9月15日',  date: new Date(year, 8, 15),     acTarget: 400, hiTarget: 30 },
+    { label: '12月15日', date: new Date(year, 11, 15),    acTarget: 600, hiTarget: 45 },
+    { label: '3月15日',  date: new Date(year + 1, 2, 15), acTarget: 800, hiTarget: 60 },
   ];
-  // 過去の日付は翌年に繰り越さず、残り日数がマイナスでも全部表示
-  return fixed;
 }
 
 function openGoalEdit() {
